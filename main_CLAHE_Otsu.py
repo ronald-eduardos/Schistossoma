@@ -40,5 +40,5 @@ def processar_imagens(diretorio_origem, diretorio_destino):
                     ski.io.imsave(os.path.join(sub_directory_destiny_png, original_png), original_layer_scaled)
                     ski.io.imsave(os.path.join(sub_directory_destiny_png, processed_png), processed_layer_scaled)
 
-            multi_tif_file_save (results, sub_directory_destiny, correspondent_archives_SHG[i].replace('.tif',''))
+            multi_tif_file_save (results, sub_directory_destiny, correspondent_archives_SHG[i])
 processar_imagens('/home/ronald/Schistossoma/original_data/tif', '/home/ronald/Schistossoma/new_CLAHE_Otsu_with_random_noise')

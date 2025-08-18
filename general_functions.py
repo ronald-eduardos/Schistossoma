@@ -73,7 +73,7 @@ def find_best_parameters(image):
     return int(thresholds[np.argmax(variances)])
 
 def normalized_probability_density_function(x):
-    return 0.0676397509607574/(0.238609613106172*(0.278708905138588*x - 1)**2 + 1)
+    return 0.0709307107483321/(0.237703668950957*(0.278947261501954*x - 1)**2 + 1)
 
 def generate_random_noise(N):
     # domínio discreto
