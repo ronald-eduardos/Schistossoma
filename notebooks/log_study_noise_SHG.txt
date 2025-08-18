@@ -1,0 +1,7 @@
+{A: 0.06812609085924469, gamma: 7.3529219369115815, x_0: 3.58490703445388, M: 72}
+Fator de normalização: 0.960459723869984
+Como o ajuste havia sido aplicado já sobre os dados normalizados era esperável que o fator de normalização fosse próximo de 1!
+razão = A/fator de normalizacao = 0.0709307107483321
+p(x)=\frac{0.0709307107483321}{1+\left(\frac{x-3.58490703445388}{7.35292193691 ↪
+
+↪ 15815}\right)^2}
