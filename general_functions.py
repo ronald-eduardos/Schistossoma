@@ -1,6 +1,32 @@
 import numpy as np
 from skimage import exposure
 import cv2
+import re
+import os
+
+'''Recebe como entrada o caminho dos arquivos originais
+   Gera listas com nomes dos arquivos PL, correspondentes
+   nomes dos arquivos SHG e as respectivas acumulações'''
+def generate_list_PL_and_SHG_archives_names_and_accumulations(path):
+    archives_PL_list = [f for f in os.listdir(path)
+                        if os.path.isfile(os.path.join(path, f)) and '.tif' in f.lower()
+                        and 'pl' in f.lower()]
+    correspondent_archives_SHG = []
+    correspondent_accumulation_PL = []
+    correspondent_accumulation_SHG = []
+    for f in archives_PL_list:
+        match_PL = re.search(r'acc(\d+)', f, flags=re.IGNORECASE)
+        correspondent_accumulation_PL.append(int(match_PL.group(1)) if match_PL else None)
+        base_name = f.split('-pl')[0]
+        correspondent_name_SHG = [g for g in os.listdir(path)
+                                  if os.path.isfile(os.path.join(path, g)) and '.tif' in f.lower()
+                                  and base_name in g and 'shg' in g.lower()][0]
+        match_SHG = re.search(r'acc(\d+)', correspondent_name_SHG, flags=re.IGNORECASE)
+        correspondent_accumulation_SHG.append(int(match_SHG.group(1)) if match_SHG else None)
+        correspondent_archives_SHG.append(correspondent_name_SHG)
+    return (archives_PL_list, correspondent_archives_SHG, correspondent_accumulation_PL,
+            correspondent_accumulation_SHG)
+
 def rescale(data, min_value, max_value):
     try:
       data_min, data_max = data.min(), data.max()
@@ -46,39 +72,36 @@ def find_best_parameters(image):
     thresholds, variances = zip(*results)
     return int(thresholds[np.argmax(variances)])
 
-def find_best_parameters_min_threshold(image):
-    clip_limits_to_try = np.arange(0.01,0.21,0.01)
-    kernel_sizes_to_try = [(8,8),(12,12),(16,16),(20,20),(24,24),(28,28),(32,32)]
-    clip_limits_index, kernel_sizes_index = np.meshgrid(np.arange(len(clip_limits_to_try)), np.arange(len(kernel_sizes_to_try)))
-    clip_limits_index, kernel_sizes_index = clip_limits_index.flatten(), kernel_sizes_index.flatten()
-    clip_limits = clip_limits_to_try[clip_limits_index]
-    kernel_sizes = [kernel_sizes_to_try[i] for i in kernel_sizes_index]
-    results = [
-      calculate_treshold_and_variance_between_classes(
-          rescale(exposure.equalize_adapthist(image, clip_limit=clip_limits[i], kernel_size=kernel_sizes[i]), min(image.ravel()), max(image.ravel()))
-      )
-      for i in range(len(clip_limits))
-      ]
-    thresholds, variances = zip(*results)
-    return int(min(thresholds))
+def normalized_probability_density_function(x):
+    return 0.0676397509607574/(0.238609613106172*(0.278708905138588*x - 1)**2 + 1)
 
-def interest_class_noise(figure, fator_multiplicativo):
+def generate_random_noise(N):
+    # domínio discreto
+    xs = np.arange(0, 596)   # 0..595 inclusive
+
+    vals = normalized_probability_density_function(xs)
+
+    # assegurar não-negatividade (por garantia)
+    vals = np.clip(vals, 0, None).astype(np.float64)
+    prob = vals/sum(vals)         #Outra vez, para garantir que a soma das probabilidades seja 1
+
+    # gerar amostras pseudo-aleatórias
+    rng = np.random.default_rng()  # muda/retira seed se não deseja determinismo
+
+    noise = rng.choice(xs, size=N, p=prob)
+    return noise.astype(np.uint16)
+
+
+def interest_class_noise(figure, acc):
     threshold = find_best_parameters(figure)
     SHG_class = figure.copy()
-    for row in SHG_class:
-      for i in range(len(row)):
-        if row[i] < threshold:
-          row[i] = 11*fator_multiplicativo
+    num_pixels = np.sum(SHG_class < threshold)
+    coords = np.where(SHG_class < threshold)
+    noise = acc*generate_random_noise(num_pixels)
+    noise =  np.clip(noise, 0, 4095)
+    SHG_class[coords] = noise
     return SHG_class
 
-def interest_class_noise_min_threshold(figure, fator_multiplicativo):
-    threshold =find_best_parameters_min_threshold(figure)
-    SHG_class = figure.copy()
-    for row in SHG_class:
-      for i in range(len(row)):
-        if row[i] < threshold:
-          row[i] = 11*fator_multiplicativo
-    return SHG_class
 
 def interest_class_noise_gaussian_blur(figure, fator_multiplicativo):
     blur = cv2.GaussianBlur(figure, (65,65), 0)

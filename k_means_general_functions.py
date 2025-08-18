@@ -10,29 +10,8 @@ import shutil
 from skimage.util import view_as_windows
 from sklearn.cluster import KMeans
 from save_multitif_file import *
+from general_functions import generate_list_PL_and_SHG_archives_names_and_accumulations
 
-'''Recebe como entrada o caminho dos arquivos originais
-   Gera listas com nomes dos arquivos PL, correspondentes
-   nomes dos arquivos SHG e as respectivas acumulações'''
-def generate_list_PL_and_SHG_archives_names_and_accumulations(path):
-    archives_PL_list = [f for f in os.listdir(path)
-                        if os.path.isfile(os.path.join(path, f)) and '.tif' in f.lower()
-                        and 'pl' in f.lower()]
-    correspondent_archives_SHG = []
-    correspondent_accumulation_PL = []
-    correspondent_accumulation_SHG = []
-    for f in archives_PL_list:
-        match_PL = re.search(r'acc(\d+)', f, flags=re.IGNORECASE)
-        correspondent_accumulation_PL.append(int(match_PL.group(1)) if match_PL else None)
-        base_name = f.split('-pl')[0]
-        correspondent_name_SHG = [g for g in os.listdir(path)
-                                  if os.path.isfile(os.path.join(path, g)) and '.tif' in f.lower()
-                                  and base_name in g and 'shg' in g.lower()][0]
-        match_SHG = re.search(r'acc(\d+)', correspondent_name_SHG, flags=re.IGNORECASE)
-        correspondent_accumulation_SHG.append(int(match_SHG.group(1)) if match_SHG else None)
-        correspondent_archives_SHG.append(correspondent_name_SHG)
-    return (archives_PL_list, correspondent_archives_SHG, correspondent_accumulation_PL,
-            correspondent_accumulation_SHG)
 
 '''Funcões para exibições gráficas das imagens e histogramas'''
 
