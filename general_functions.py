@@ -102,6 +102,16 @@ def interest_class_noise(figure, acc):
     SHG_class[coords] = noise
     return SHG_class
 
+def interest_class_regular_noise(figure, acc):
+    threshold = find_best_parameters(figure)
+    SHG_class = figure.copy()
+    num_pixels = np.sum(SHG_class < threshold)
+    coords = np.where(SHG_class < threshold)
+    noise = acc*np.full(num_pixels, 11)
+    noise =  np.clip(noise, 0, 4095)
+    SHG_class[coords] = noise
+    return SHG_class
+
 
 def interest_class_noise_gaussian_blur(figure, fator_multiplicativo):
     blur = cv2.GaussianBlur(figure, (65,65), 0)
